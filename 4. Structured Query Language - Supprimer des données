@@ -34,6 +34,8 @@ INSERT INTO logs ("user","message") VALUES ('admin','Erases file');
 INSERT INTO logs ("user","message") VALUES ('admin','Connects');
 INSERT INTO logs ("user","message") VALUES ('admin','Leaves');
 INSERT INTO logs ("user","message") VALUES ('admin','Create new file');
+
+BACKUP DATABASE SuperMoney TO DISK = 'C:\Program Files\Microsoft SQL Server\MSSQL15.SQLEXPRESS\MSSQL\Backup\SuperMoney.bak';
 GO
 BEGIN TRANSACTION
 	DELETE FROM logs WHERE [user] = 'hack3r';
