@@ -1,0 +1,86 @@
+CREATE DATABASE MartienTerrien;
+GO
+
+USE MartienTerrien
+GO
+
+CREATE TABLE [MartienBase](
+	[idMartienBase] [int] PRIMARY KEY IDENTITY(1,1) NOT NULL,
+	[name] [varchar](50) NOT NULL,
+  )
+GO
+
+CREATE TABLE [TerrienContinent](
+	[idTerrienContinent] [int] PRIMARY KEY IDENTITY(1,1) NOT NULL,
+	[name] [varchar](50) NOT NULL,
+  )
+GO
+
+CREATE TABLE [MartienSup](
+	[idMartienSup] [int] PRIMARY KEY IDENTITY(1,1) NOT NULL,
+	[name] [varchar](50) NOT NULL,
+  )
+GO
+
+CREATE TABLE [Terrien](
+	[idTerrien] [int] PRIMARY KEY IDENTITY(1,1) NOT NULL,
+	[name] [varchar](50) NOT NULL,
+	[FK_continent_id] [int] FOREIGN KEY REFERENCES TerrienContinent(idTerrienContinent)	
+  )
+GO
+
+
+CREATE TABLE [Martien](
+	[idMartien] [int] PRIMARY KEY IDENTITY(1,1) NOT NULL,
+	[name] [varchar](50) NOT NULL,
+	[FK_base_id] [int] FOREIGN KEY REFERENCES MartienBase(idMartienBase),  
+	[FK_martienSup_id] [int] FOREIGN KEY REFERENCES MartienSup(idMartienSup),
+	[FK_terrienDeRef_id] [int] FOREIGN KEY REFERENCES Terrien(idTerrien)
+  )
+GO
+
+
+
+INSERT INTO [TerrienContinent] ([name]) VALUES ('Amérique')
+INSERT INTO [TerrienContinent] ([name]) VALUES ('Asie')
+INSERT INTO [TerrienContinent] ([name]) VALUES ('Afrique')
+
+INSERT INTO [MartienBase] ([name]) VALUES ('Basabasabasa')
+INSERT INTO [MartienBase] ([name]) VALUES ('Bosobosoboso')
+INSERT INTO [MartienBase] ([name]) VALUES ('Busubusubusu')
+INSERT INTO [MartienBase] ([name]) VALUES ('Besebesebese')
+
+INSERT INTO [Terrien] ([name], [FK_continent_id]) VALUES ('Georges', 1)
+INSERT INTO [Terrien] ([name], [FK_continent_id]) VALUES ('Bill', 2)
+INSERT INTO [Terrien] ([name], [FK_continent_id]) VALUES ('Harry', 1)
+INSERT INTO [Terrien] ([name], [FK_continent_id]) VALUES ('John', 3)
+INSERT INTO [Terrien] ([name], [FK_continent_id]) VALUES ('Luke', 2)
+INSERT INTO [Terrien] ([name], [FK_continent_id]) VALUES ('Nora', 3)
+INSERT INTO [Terrien] ([name], [FK_continent_id]) VALUES ('Lea', 2)
+INSERT INTO [Terrien] ([name], [FK_continent_id]) VALUES ('Mona', 1)
+INSERT INTO [Terrien] ([name], [FK_continent_id]) VALUES ('Elsa', 1)
+INSERT INTO [Terrien] ([name], [FK_continent_id]) VALUES ('Maria', 2)
+
+
+INSERT INTO [MartienSup] ([name]) VALUES ('Mikmikmik')
+INSERT INTO [MartienSup] ([name]) VALUES ('Makmakmak')
+INSERT INTO [MartienSup] ([name]) VALUES ('Mokmokmok')
+INSERT INTO [MartienSup] ([name]) VALUES ('Mekmekmek')
+INSERT INTO [MartienSup] ([name]) VALUES ('EmperorPikPakPuk')
+
+INSERT INTO [Martien] ([name], [FK_base_id], [FK_martienSup_id], [FK_terrienDeRef_id]) VALUES ('Klakla', 1, 1, 1)
+INSERT INTO [Martien] ([name], [FK_base_id], [FK_martienSup_id], [FK_terrienDeRef_id]) VALUES ('Kluklu', 2, 2, 2)
+INSERT INTO [Martien] ([name], [FK_base_id], [FK_martienSup_id], [FK_terrienDeRef_id]) VALUES ('Klekle', 3, 3, 3)
+INSERT INTO [Martien] ([name], [FK_base_id], [FK_martienSup_id], [FK_terrienDeRef_id]) VALUES ('Kloklo', 3, 3, 4)
+INSERT INTO [Martien] ([name], [FK_base_id], [FK_martienSup_id], [FK_terrienDeRef_id]) VALUES ('Klikli', 4, 4, 5)
+INSERT INTO [Martien] ([name], [FK_base_id], [FK_martienSup_id], [FK_terrienDeRef_id]) VALUES ('Mikmikmik', 1, 5, 6)
+INSERT INTO [Martien] ([name], [FK_base_id], [FK_martienSup_id], [FK_terrienDeRef_id]) VALUES ('Makmakmak', 2, 5, 7)
+INSERT INTO [Martien] ([name], [FK_base_id], [FK_martienSup_id], [FK_terrienDeRef_id]) VALUES ('Mokmokmok', 3, 5, 8)
+INSERT INTO [Martien] ([name], [FK_base_id], [FK_martienSup_id], [FK_terrienDeRef_id]) VALUES ('Mekmekmek', 4, 5, 9)
+INSERT INTO [Martien] ([name], [FK_base_id], [FK_martienSup_id], [FK_terrienDeRef_id]) VALUES ('EmperorPikPakPuk', 2, 5, 10)
+
+
+SELECT Martien.[Name] AS MartianName, Terrien.[Name] AS TerrienRefName, TerrienContinent.[Name] AS TerrienContinent, MartienBase.[Name] AS MartianBaseName FROM Martien
+INNER JOIN Terrien ON Terrien.idTerrien = Martien.FK_terrienDeRef_id
+INNER JOIN TerrienContinent ON TerrienContinent.idTerrienContinent = Terrien.FK_continent_id
+INNER JOIN MartienBase ON MartienBase.idMartienBase = Martien.FK_base_id
