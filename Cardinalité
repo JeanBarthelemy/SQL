@@ -1,0 +1,56 @@
+CREATE DATABASE QueteCardinalite
+GO
+
+USE QueteCardinalite
+GO
+
+
+CREATE TABLE Category (
+	CategoryID INT PRIMARY KEY IDENTITY (1, 1),
+	[Name] VARCHAR(60) NOT NULL
+)
+GO
+
+
+CREATE TABLE Product (
+	ProductID INT PRIMARY KEY IDENTITY (1, 1),
+	[Name] VARCHAR(60) NOT NULL,
+	[Price] DECIMAL NOT NULL,
+	FK_CategoryID INT FOREIGN KEY REFERENCES Category(CategoryID)
+)
+GO
+
+
+CREATE TABLE Sale (
+	SaleID INT PRIMARY KEY IDENTITY (1, 1),
+	BoughtAt DATETIME NOT NULL,
+	FK_ProductID INT FOREIGN KEY REFERENCES Product(ProductID)
+)
+GO
+
+
+CREATE TABLE ProductStock (
+	ProductStockID INT PRIMARY KEY IDENTITY (1, 1),
+	FK_Product_ID INT, 
+	CONSTRAINT FK_ProductID FOREIGN KEY (FK_Product_ID) REFERENCES Product(ProductID)
+)
+GO
+
+
+INSERT INTO Category VALUES ('Plats'), ('Boisson'), ('Dessert')
+
+INSERT INTO Product VALUES ('Hamburger', 2, 1), ('Cheeseburger', 3, 1), ('Nugget', 4, 1), ('Iced Tea', 2, 2), ('Coca Cola', 2, 2), ('Sprite', 2, 2), ('Sundae', 3, 3), ('McFlurry', 3.5, 3), ('McMuffin', 2, 3)
+
+INSERT INTO Sale VALUES ('2020-02-24 00:00:00.000', 1), ('2020-01-13 00:00:00.000', 2), ('2020-01-25 00:00:00.000', 3), ('2020-02-04 00:00:00.000', 4), ('2020-02-14 00:00:00.000', 5), ('2020-01-30 00:00:00.000', 6),
+						('2020-02-16 00:00:00.000', 1), ('2020-01-23 00:00:00.000', 7), ('2020-01-12 00:00:00.000', 8), ('2020-02-20 00:00:00.000', 9), ('2019-01-18 00:00:00.000', 7), ('2020-02-01 00:00:00.000', 6),
+					    ('2019-12-16 00:00:00.000', 7), ('2019-04-25 00:00:00.000', 9), ('2019-05-22 00:00:00.000', 3), ('2019-09-29 00:00:00.000', 4), ('2019-03-01 00:00:00.000', 5), ('2019-06-16 00:00:00.000', 8)
+
+INSERT INTO ProductStock VALUES (1), (2), (3), (4), (5), (6), (1), (2), (3), (4), (5), (6), (7), (8), (9), (8), (7), (7), (8), (9), (6), (3), (5), (4), (7), (9), (8), (8), (3)
+GO
+
+
+SELECT Category.[Name] AS Category, Count(ProductStock.ProductStockID) AS ProductInStock FROM Product
+INNER JOIN Category ON Category.CategoryID = Product.FK_CategoryID
+INNER JOIN ProductStock ON ProductStock.FK_Product_ID = Product.ProductID
+GROUP BY Category.[Name]
+GO
