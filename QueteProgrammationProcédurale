@@ -1,0 +1,136 @@
+IF DB_ID('PandemyAlert') IS NOT NULL
+ DROP DATABASE PandemyAlert
+GO
+CREATE DATABASE PandemyAlert
+GO
+
+USE PandemyAlert
+
+CREATE TABLE Country(country_id INT PRIMARY KEY IDENTITY(1,1),
+                     name VARCHAR(60) NOT NULL)
+CREATE TABLE City(city_id INT PRIMARY KEY IDENTITY(1,1), 
+                  name VARCHAR(60) NOT NULL, 
+                  FK_country_id INT NOT NULL, 
+                  FOREIGN KEY (FK_country_id) REFERENCES Country(country_id))
+CREATE TABLE Person(person_id INT PRIMARY KEY IDENTITY(1,1), 
+                    name VARCHAR(60),
+                    is_infected BIT NOT NULL,
+                    FK_city_id INT NOT NULL,
+                    FOREIGN KEY (FK_city_id) REFERENCES City(city_id))
+CREATE TABLE Pharmaceutical(pharmaceutical_id INT PRIMARY KEY IDENTITY(1,1), 
+                            disease VARCHAR(60) NOT NULL, 
+                            count INT NOT NULL)
+
+INSERT INTO Country (name) VALUES ('France'),
+                                  ('Allemagne'),
+                                  ('Italie'),
+                                  ('Etats-Unis'),
+                                  ('Chine'),
+                                  ('Russie')
+INSERT INTO City(name, FK_Country_id) VALUES ('Paris', 1),('Strasbourg',1),
+                                             ('Berlin', 2),('Cologne', 2),
+                                             ('Rome', 3),('Florence', 3),
+                                             ('Washington', 4),('New York', 4),
+                                             ('Pékin', 5),('Shangaï', 5),
+                                             ('St-Pétersbourg', 6),('Moscou', 6)
+INSERT INTO Pharmaceutical(disease, count) VALUES ('Triméthylaminurie', 50)
+GO
+
+DECLARE @Count INT, @Person_name VARCHAR(60), @Person_name_nb INT, @IsInfected BIT, @City_id INT, @PersonByCity_count INT
+SET @Count = 1
+SET @Person_name_nb = 1
+SET @Person_name = 'Person'
+SET @IsInfected = 0
+SET @City_id = 1
+SET @PersonByCity_count = 10
+
+WHILE (@Count <= 120)
+BEGIN
+	SET @Person_name = 'Person' + CONVERT(VARCHAR, @Person_name_nb)
+	INSERT INTO Person VALUES (@Person_name, @IsInfected, @City_id)
+	SET @Person_name_nb = @Person_name_nb + 1
+	IF (@Count < @PersonByCity_count)
+		BEGIN
+		  SET @City_id = @City_id
+		END
+	ELSE 
+		BEGIN
+      SET @City_id = @City_id + 1
+      SET @PersonByCity_count = @PersonByCity_count + 10
+		END
+	IF (@Count % 2 = 0)
+		BEGIN
+		  SET @IsInfected  = 0
+		END
+	ELSE 
+		BEGIN
+		  SET @IsInfected = 1
+		END
+	SET @Count = @Count + 1
+END
+GO
+
+
+
+CREATE PROCEDURE sp_PersonInfectedByCountry
+    @CountryName VARCHAR(60)
+AS
+BEGIN
+  RETURN (SELECT COUNT(Person.is_infected) FROM Person
+  INNER JOIN City ON City.city_id = Person.FK_city_id
+  INNER JOIN Country ON Country.country_id = City.FK_country_id
+  WHERE Person.is_infected = 1 AND @CountryName = Country.[name])
+END
+GO 
+
+
+CREATE PROCEDURE sp_PersonInfectedByCityOfCountry
+    @CountryName VARCHAR(60),
+    @CityName VARCHAR (60)
+AS
+BEGIN
+  RETURN (SELECT COUNT(Person.is_infected) FROM Person
+  INNER JOIN City ON City.city_id = Person.FK_city_id
+  INNER JOIN Country ON Country.country_id = City.FK_country_id
+  WHERE Person.is_infected = 1 AND @CountryName = Country.[name] AND @CityName = City.[name])
+END
+GO 
+
+
+DECLARE @PersonInfectedByCountry INT
+EXECUTE @PersonInfectedByCountry = sp_PersonInfectedByCountry 'Allemagne'
+
+DECLARE @PersonInfectedByCityOfCountry INT
+EXECUTE @PersonInfectedByCityOfCountry = sp_PersonInfectedByCityOfCountry 'Allemagne', 'Berlin'
+
+DECLARE @SumPersonInfectedInEveryCountry INT
+SELECT @SumPersonInfectedInEveryCountry = COUNT(Person.is_infected) FROM Person WHERE Person.is_infected = 1
+
+DECLARE @NbCountry INT
+SELECT @NbCountry = COUNT(Country.country_id) FROM Country
+
+IF @PersonInfectedByCountry >= @SumPersonInfectedInEveryCountry / @NbCountry
+PRINT @PersonInfectedByCityOfCountry
+
+
+
+
+
+
+--Si le nombre de cas d'un pays est égal au total de tous les cas par pays divisé par le nombre de pays, alors le nombre de cas par ville du pays en question est affiché
+
+/*--tableau pays, ville, nb personne infectées
+SELECT Country.[name] AS Country, City.[name] AS City, COUNT(Person.is_infected) AS PersonInfected FROM Person
+INNER JOIN City ON City.city_id = Person.FK_city_id
+INNER JOIN Country ON Country.country_id = City.FK_country_id
+WHERE Person.is_infected = 1
+GROUP BY City.[name], Country.[name]
+
+--tableau pays, nb personnes infectées
+SELECT Country.[name] AS Country, COUNT(Person.is_infected) AS PersonInfected FROM Person
+INNER JOIN City ON City.city_id = Person.FK_city_id
+INNER JOIN Country ON Country.country_id = City.FK_country_id
+WHERE Person.is_infected = 1
+GROUP BY Country.[name]
+GO
+*/
