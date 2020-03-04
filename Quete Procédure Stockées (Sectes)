@@ -1,0 +1,122 @@
+DROP DATABASE IF EXISTS SectTracking
+GO
+CREATE DATABASE SectTracking
+GO
+
+USE SectTracking
+
+CREATE TABLE Address(address_id INT PRIMARY KEY IDENTITY(1,1),
+                     street_number INT,
+                     street_name VARCHAR(120) NOT NULL)
+CREATE TABLE Sect(sect_id INT PRIMARY KEY IDENTITY(1,1),
+                  name VARCHAR(60) NOT NULL)
+CREATE TABLE Adherent(adherent_id INT PRIMARY KEY IDENTITY(1,1),
+                      name VARCHAR(60))
+CREATE TABLE SectAdherent(sect_adherent_id INT PRIMARY KEY IDENTITY(1,1),
+                          FK_adherent_id INT NOT NULL,
+                          FOREIGN KEY (FK_adherent_id) REFERENCES Adherent(adherent_id),
+                          FK_sect_id INT NOT NULL,
+                          FOREIGN KEY (FK_sect_id) REFERENCES Sect(sect_id))
+GO
+
+INSERT INTO Sect(name) VALUES ('Le Concombre Sacré'), ('Tomatologie'), ('Les abricots volant')
+GO
+
+DECLARE Sect_Cursor CURSOR SCROLL FOR
+   SELECT sect_id FROM Sect
+DECLARE @LastAdherentId INT
+DECLARE @SectId INT
+WHILE (SELECT COUNT(*) FROM SectAdherent) < 30
+   BEGIN
+      OPEN Sect_Cursor
+      FETCH FIRST FROM Sect_Cursor INTO @SectId
+      WHILE @@FETCH_STATUS = 0
+         BEGIN
+            INSERT INTO Adherent(name) VALUES(NULL)
+            SET @LastAdherentId = (SELECT TOP(1) adherent_id FROM Adherent ORDER BY adherent_id DESC)
+            INSERT INTO SectAdherent(FK_adherent_id, FK_sect_id) VALUES (@LastAdherentId, @SectId)
+            FETCH NEXT FROM Sect_Cursor INTO @SectId
+         END
+      CLOSE Sect_Cursor
+   END
+DEALLOCATE Sect_Cursor
+GO
+
+
+
+--Ecris une procédure qui affiche le nombre d'adhérents par secte
+
+              --Requête 
+              /*
+              SELECT Sect.[name] AS Sect, COUNT(Adherent.adherent_id) AS AdherentNumber FROM Adherent
+              INNER JOIN SectAdherent ON SectAdherent.FK_adherent_id = Adherent.adherent_id
+              INNER JOIN Sect ON Sect.sect_id = SectAdherent.FK_sect_id
+              GROUP BY Sect.[name]
+              */
+
+CREATE PROCEDURE sp_AdherentNumberBySect
+	@Sect VARCHAR (60)
+AS
+BEGIN
+	RETURN (SELECT COUNT(Adherent.adherent_id) AS AdherentNumber FROM Adherent
+			INNER JOIN SectAdherent ON SectAdherent.FK_adherent_id = Adherent.adherent_id
+			INNER JOIN Sect ON Sect.sect_id = SectAdherent.FK_sect_id
+			WHERE @Sect = Sect.[name])
+
+END
+GO
+
+
+DECLARE @AdherentNumberInConcombre INT
+DECLARE @AdherentNumberInTomato INT
+DECLARE @AdherentNumberInAbricot INT
+EXECUTE @AdherentNumberInConcombre = sp_AdherentNumberBySect 'Le Concombre Sacré'
+EXECUTE @AdherentNumberInTomato = sp_AdherentNumberBySect 'Tomatologie'
+EXECUTE @AdherentNumberInAbricot = sp_AdherentNumberBySect 'Les abricots volant'
+PRINT @AdherentNumberInConcombre
+PRINT @AdherentNumberInTomato
+PRINT @AdherentNumberInAbricot
+GO
+
+
+--Ecris une procédure qui associe chacun des adhérents à chacune des sectes
+
+CREATE PROCEDURE sp_AffiliateAdherentToSect
+	@LastAdherentId INT,
+	@SectId INT,
+	@CurrentlyNumberOfAdherentPlusOne INT
+AS
+DECLARE Sect_Cursor CURSOR SCROLL FOR
+   SELECT sect_id FROM Sect
+WHILE (SELECT COUNT(*) FROM SectAdherent) < @CurrentlyNumberOfAdherentPlusOne
+   BEGIN
+      OPEN Sect_Cursor
+      FETCH FIRST FROM Sect_Cursor INTO @SectId
+      INSERT INTO Adherent(name) VALUES(NULL)
+      SET @LastAdherentId = (SELECT TOP(1) adherent_id FROM Adherent ORDER BY adherent_id DESC)
+      INSERT INTO SectAdherent(FK_adherent_id, FK_sect_id) VALUES (@LastAdherentId, @SectId)
+      CLOSE Sect_Cursor
+   END
+DEALLOCATE Sect_Cursor
+RETURN 
+GO
+
+
+DECLARE @NewSectAdherentID INT
+EXECUTE @NewSectAdherentID = sp_AffiliateAdherentToSect '31', '3', '31'
+GO
+
+
+--Ecris une procédure qui retourne le nombre de sectes dans un argument de sortie
+
+CREATE PROCEDURE sp_GetSectNumber
+	@SectCount INT OUTPUT
+AS
+BEGIN
+	SELECT @SectCount = COUNT(Sect.sect_id) FROM Sect
+END
+GO
+
+DECLARE @SectCount INT
+EXECUTE sp_GetSectNumber @SectCount OUTPUT
+PRINT @SectCount
